@@ -1,6 +1,10 @@
+const fs = require('fs');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const { pathToFileURL } = require('url');
+
+const repoProductsFilePath = path.resolve(__dirname, 'products.json');
+const tempProductsFilePath = path.resolve(process.env.TMPDIR || '/tmp', 'products.json');
 
 const usersStore = new Map();
 const pendingOtps = new Map();
@@ -49,6 +53,53 @@ const jsonResponse = (statusCode, payload) => ({
 
 const DEFAULT_ADMIN_EMAIL = 'admin';
 const DEFAULT_ADMIN_PASSWORD = 'admin';
+
+const saveProductsToFile = async () => {
+  try {
+    // Always save runtime changes to the temporary function filesystem.
+    await fs.promises.writeFile(tempProductsFilePath, JSON.stringify(productsStore, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('Unable to save products to temp file:', err);
+  }
+};
+
+const loadProductsFromFile = async () => {
+  let raw;
+  try {
+    raw = await fs.promises.readFile(tempProductsFilePath, 'utf-8');
+  } catch (err) {
+    try {
+      raw = await fs.promises.readFile(repoProductsFilePath, 'utf-8');
+    } catch (innerErr) {
+      raw = null;
+    }
+  }
+
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        productsStore.length = 0;
+        productsStore.push(...parsed);
+        return;
+      }
+    } catch (err) {
+      console.warn('Unable to parse products file:', err);
+    }
+  }
+
+  try {
+    const productsPath = path.resolve(__dirname, '../../src/data.js');
+    const dataModule = await import(pathToFileURL(productsPath).href);
+    if (Array.isArray(dataModule.INITIAL_PRODUCTS)) {
+      productsStore.length = 0;
+      productsStore.push(...dataModule.INITIAL_PRODUCTS);
+      await saveProductsToFile();
+    }
+  } catch (err) {
+    console.warn('Unable to load initial products for API route:', err);
+  }
+};
 
 const sendOtpEmail = async (email, otpCode, firstName) => {
   const transporter = createTransporter();
@@ -247,20 +298,13 @@ exports.handler = async (event) => {
 
   if (route === '/products' && method === 'GET') {
     if (productsStore.length === 0) {
-      try {
-        const productsPath = path.resolve(__dirname, '../../src/data.js');
-        const dataModule = await import(pathToFileURL(productsPath).href);
-        if (Array.isArray(dataModule.INITIAL_PRODUCTS)) {
-          productsStore.push(...dataModule.INITIAL_PRODUCTS);
-        }
-      } catch (err) {
-        console.warn('Unable to load initial products for API route:', err);
-      }
+      await loadProductsFromFile();
     }
     return jsonResponse(200, { products: productsStore });
   }
 
   if (route === '/products' && method === 'POST') {
+    await loadProductsFromFile();
     const { title, description, price, salePrice, category, collection, images, sizes, inStock, isFeatured } = body;
     if (!title || !price || !category) {
       return jsonResponse(400, { error: 'Title, price, and category are required.' });
@@ -281,10 +325,13 @@ exports.handler = async (event) => {
       createdAt: new Date().toISOString(),
     };
     productsStore.unshift(newProd);
+    await saveProductsToFile();
     return jsonResponse(200, { success: true, product: newProd });
   }
 
   if (route.startsWith('/products/') && method === 'PUT') {
+    await loadProductsFromFile();
+    await loadProductsFromFile();
     const productId = route.replace('/products/', '');
     const existingIndex = productsStore.findIndex((p) => p.id === productId);
     if (existingIndex === -1) {
@@ -297,11 +344,13 @@ exports.handler = async (event) => {
       price: body.price !== undefined ? Number(body.price) : productsStore[existingIndex].price,
       salePrice: body.salePrice !== undefined ? Number(body.salePrice) : productsStore[existingIndex].salePrice,
     };
+    await saveProductsToFile();
 
     return jsonResponse(200, { success: true, product: productsStore[existingIndex] });
   }
 
   if (route.startsWith('/products/') && method === 'DELETE') {
+    await loadProductsFromFile();
     const productId = route.replace('/products/', '');
     const beforeLength = productsStore.length;
     const filtered = productsStore.filter((p) => p.id !== productId);
@@ -310,6 +359,7 @@ exports.handler = async (event) => {
     }
     productsStore.length = 0;
     productsStore.push(...filtered);
+    await saveProductsToFile();
     return jsonResponse(200, { success: true, message: 'Product deleted successfully.' });
   }
 

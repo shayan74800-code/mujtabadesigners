@@ -153,7 +153,7 @@ export default function App() {
       // @ts-ignore
       const { parseJSONSafe } = await import('./utils/response');
       const data = await parseJSONSafe(res);
-      if (res.ok && data && data.products && data.products.length > 0) {
+      if (res.ok && data && Array.isArray(data.products)) {
         setProducts(data.products);
       }
     } catch (err) {
