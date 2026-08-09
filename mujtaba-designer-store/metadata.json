@@ -1,0 +1,6 @@
+{
+  "name": "Mujtaba Designer",
+  "description": "GraceStore-style high-end luxury minimalist e-commerce store with email OTP auth, brand video hero background, pending/confirmed order CMS workflow, and product catalog management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
