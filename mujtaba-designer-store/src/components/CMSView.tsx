@@ -546,8 +546,8 @@ export const CMSView: React.FC<CMSViewProps> = ({
 
             <form onSubmit={handleLoginSubmit} className="space-y-5">
               <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-stone-400 flex items-center justify-between">
-                <span>Default Login:</span>
-                <span className="font-mono text-amber-300 font-bold">Use your configured admin credentials</span>
+                <span>Admin Login:</span>
+                <span className="font-mono text-amber-300 font-bold">admin / admin123 (default)</span>
               </div>
 
               <div>

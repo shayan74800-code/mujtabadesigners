@@ -1,8 +1,7 @@
 [build]
-  base = "mujtaba-designer-store"
-  command = "npm install && npm run build"
+  command = "cd mujtaba-designer-store && npm install && npm run build"
   publish = "mujtaba-designer-store/dist"
-  functions = "netlify/functions"
+  functions = "mujtaba-designer-store/netlify/functions"
 
 [[redirects]]
   from = "/api/*"

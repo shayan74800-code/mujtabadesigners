@@ -175,5 +175,25 @@ exports.handler = async (event) => {
     });
   }
 
+  if (route === '/auth/admin-login' && method === 'POST') {
+    const { email, password } = body;
+    if (!email || !password) {
+      return jsonResponse(400, { error: 'Email and password are required.' });
+    }
+
+    const expectedEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
+    const expectedPassword = process.env.ADMIN_PASSWORD || 'admin123';
+
+    if (email === expectedEmail && password === expectedPassword) {
+      return jsonResponse(200, {
+        success: true,
+        admin: { email: expectedEmail, role: 'admin' },
+        token: `admin_token_${Date.now()}`,
+      });
+    }
+
+    return jsonResponse(401, { error: 'Invalid Admin credentials.' });
+  }
+
   return jsonResponse(404, { error: 'API route not found.' });
 };

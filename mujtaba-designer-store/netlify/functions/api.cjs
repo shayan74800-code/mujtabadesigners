@@ -8,7 +8,7 @@ const createTransporter = () => {
   const emailPass = process.env.EMAIL_PASS;
 
   if (!emailUser || !emailPass) {
-    console.warn('EMAIL_USER or EMAIL_PASS not found in environment. OTP email will not be sent.');
+    console.warn('EMAIL_USER or EMAIL_PASS not configured. OTP email will not be sent.');
     return null;
   }
 
@@ -79,7 +79,13 @@ exports.handler = async (event) => {
     }
   }
 
-  const route = event.path.replace(/^\/api/, '') || '/';
+  let route = event.path || '/';
+  if (route.startsWith('/.netlify/functions/api')) {
+    route = route.replace(/^\/\.netlify\/functions\/api/, '');
+  } else {
+    route = route.replace(/^\/api/, '');
+  }
+  route = route || '/';
   const method = event.httpMethod;
 
   if (route === '/auth/send-otp' && method === 'POST') {
@@ -112,7 +118,6 @@ exports.handler = async (event) => {
     if (process.env.NODE_ENV !== 'production') {
       response.debugOtp = otpCode;
     }
-
     return jsonResponse(200, response);
   }
 
@@ -173,6 +178,26 @@ exports.handler = async (event) => {
       user: account.user,
       token: `token_usr_${Date.now()}_${Math.random().toString(36).substring(2)}`,
     });
+  }
+
+  if (route === '/auth/admin-login' && method === 'POST') {
+    const { email, password } = body;
+    if (!email || !password) {
+      return jsonResponse(400, { error: 'Email and password are required.' });
+    }
+
+    const expectedEmail = process.env.ADMIN_EMAIL || 'admin';
+    const expectedPassword = process.env.ADMIN_PASSWORD || 'admin123';
+
+    if (email === expectedEmail && password === expectedPassword) {
+      return jsonResponse(200, {
+        success: true,
+        admin: { email: expectedEmail, role: 'admin' },
+        token: `admin_token_${Date.now()}`,
+      });
+    }
+
+    return jsonResponse(401, { error: 'Invalid Admin credentials.' });
   }
 
   return jsonResponse(404, { error: 'API route not found.' });
