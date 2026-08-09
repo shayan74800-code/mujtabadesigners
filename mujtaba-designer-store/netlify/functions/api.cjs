@@ -186,8 +186,12 @@ exports.handler = async (event) => {
       return jsonResponse(400, { error: 'Email and password are required.' });
     }
 
-    const expectedEmail = process.env.ADMIN_EMAIL || 'admin';
-    const expectedPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const expectedEmail = process.env.ADMIN_EMAIL;
+    const expectedPassword = process.env.ADMIN_PASSWORD;
+
+    if (!expectedEmail || !expectedPassword) {
+      return jsonResponse(500, { error: 'Admin credentials are not configured.' });
+    }
 
     if (email === expectedEmail && password === expectedPassword) {
       return jsonResponse(200, {
