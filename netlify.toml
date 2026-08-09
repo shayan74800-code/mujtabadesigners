@@ -2,6 +2,13 @@
   base = "mujtaba-designer-store"
   command = "npm install && npm run build"
   publish = "mujtaba-designer-store/dist"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
