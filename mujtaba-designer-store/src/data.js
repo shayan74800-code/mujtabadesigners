@@ -1,4 +1,4 @@
-exports.INITIAL_PRODUCTS = [
+export const INITIAL_PRODUCTS = [
   {
     id: 'prod-1',
     title: 'Maharaja Royal Zardozi Sherwani',

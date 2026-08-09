@@ -1,7 +1,20 @@
 const nodemailer = require('nodemailer');
+const path = require('path');
+const { pathToFileURL } = require('url');
 
 const usersStore = new Map();
 const pendingOtps = new Map();
+const productsStore = [];
+const ordersStore = [];
+const videoSettingsStore = {
+  heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-in-a-white-dress-walking-41443-large.mp4',
+  heroPosterUrl: '/assets/images/mujtaba_video_hero_1786177863771.jpg',
+  showcaseVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-in-a-white-dress-walking-41443-large.mp4',
+  showcasePosterUrl: '/assets/images/mujtaba_video_hero_1786177863771.jpg',
+  showcaseTitle: 'PURE LUXURY • DEFINE YOUR STYLE',
+  showcaseSubtitle: 'Watch the official Mujtaba Designer 2026 runway showcase featuring our signature emerald embroidered gown & gold-pinstripe bespoke suit.',
+  updatedAt: new Date().toISOString(),
+};
 
 const createTransporter = () => {
   const emailUser = process.env.EMAIL_USER;
@@ -87,6 +100,19 @@ exports.handler = async (event) => {
   }
   route = route || '/';
   const method = event.httpMethod;
+  const query = event.queryStringParameters || {};
+
+  if (productsStore.length === 0) {
+    try {
+      const productsPath = path.resolve(__dirname, '../../src/data.js');
+      const dataModule = await import(pathToFileURL(productsPath).href);
+      if (Array.isArray(dataModule.INITIAL_PRODUCTS)) {
+        productsStore.push(...dataModule.INITIAL_PRODUCTS);
+      }
+    } catch (err) {
+      console.warn('Unable to load initial products for API route:', err);
+    }
+  }
 
   if (route === '/auth/send-otp' && method === 'POST') {
     const { gmail, firstName, lastName, password } = body;
@@ -202,6 +228,152 @@ exports.handler = async (event) => {
     }
 
     return jsonResponse(401, { error: 'Invalid Admin credentials.' });
+  }
+
+  if (route === '/settings/video' && method === 'GET') {
+    return jsonResponse(200, videoSettingsStore);
+  }
+
+  if (route === '/settings/video' && method === 'PUT') {
+    const { heroVideoUrl, heroPosterUrl, showcaseVideoUrl, showcasePosterUrl, showcaseTitle, showcaseSubtitle } = body;
+    if (heroVideoUrl) videoSettingsStore.heroVideoUrl = heroVideoUrl.trim();
+    if (heroPosterUrl) videoSettingsStore.heroPosterUrl = heroPosterUrl.trim();
+    if (showcaseVideoUrl) videoSettingsStore.showcaseVideoUrl = showcaseVideoUrl.trim();
+    if (showcasePosterUrl) videoSettingsStore.showcasePosterUrl = showcasePosterUrl.trim();
+    if (showcaseTitle) videoSettingsStore.showcaseTitle = showcaseTitle.trim();
+    if (showcaseSubtitle) videoSettingsStore.showcaseSubtitle = showcaseSubtitle.trim();
+    videoSettingsStore.updatedAt = new Date().toISOString();
+
+    return jsonResponse(200, {
+      success: true,
+      message: 'Video settings updated successfully.',
+      settings: videoSettingsStore,
+    });
+  }
+
+  if (route === '/products' && method === 'GET') {
+    return jsonResponse(200, { products: productsStore });
+  }
+
+  if (route === '/products' && method === 'POST') {
+    const { title, description, price, salePrice, category, collection, images, sizes, inStock, isFeatured } = body;
+    if (!title || !price || !category) {
+      return jsonResponse(400, { error: 'Title, price, and category are required.' });
+    }
+
+    const newProd = {
+      id: `prod-${Date.now()}`,
+      title: title.trim(),
+      description: description ? description.trim() : '',
+      price: Number(price),
+      salePrice: salePrice ? Number(salePrice) : undefined,
+      category: category.trim(),
+      collection: collection ? collection.trim() : undefined,
+      images: Array.isArray(images) && images.length > 0 ? images : [],
+      sizes: Array.isArray(sizes) && sizes.length > 0 ? sizes : ['S', 'M', 'L'],
+      inStock: inStock !== undefined ? Boolean(inStock) : true,
+      isFeatured: isFeatured !== undefined ? Boolean(isFeatured) : false,
+      createdAt: new Date().toISOString(),
+    };
+    productsStore.unshift(newProd);
+    return jsonResponse(200, { success: true, product: newProd });
+  }
+
+  if (route.startsWith('/products/') && method === 'PUT') {
+    const productId = route.replace('/products/', '');
+    const existingIndex = productsStore.findIndex((p) => p.id === productId);
+    if (existingIndex === -1) {
+      return jsonResponse(404, { error: 'Product not found.' });
+    }
+
+    productsStore[existingIndex] = {
+      ...productsStore[existingIndex],
+      ...body,
+      price: body.price !== undefined ? Number(body.price) : productsStore[existingIndex].price,
+      salePrice: body.salePrice !== undefined ? Number(body.salePrice) : productsStore[existingIndex].salePrice,
+    };
+
+    return jsonResponse(200, { success: true, product: productsStore[existingIndex] });
+  }
+
+  if (route.startsWith('/products/') && method === 'DELETE') {
+    const productId = route.replace('/products/', '');
+    const beforeLength = productsStore.length;
+    const filtered = productsStore.filter((p) => p.id !== productId);
+    if (filtered.length === beforeLength) {
+      return jsonResponse(404, { error: 'Product not found.' });
+    }
+    productsStore.length = 0;
+    productsStore.push(...filtered);
+    return jsonResponse(200, { success: true, message: 'Product deleted successfully.' });
+  }
+
+  if (route === '/orders' && method === 'POST') {
+    const { userEmail, userName, phone, address, city, notes, items, totalAmount, paymentMethod } = body;
+    if (!userEmail || !items || items.length === 0 || !address || !phone) {
+      return jsonResponse(400, { error: 'Missing required order fields or items.' });
+    }
+
+    const newOrder = {
+      id: `ord-${Date.now()}`,
+      orderNumber: `MD-${Math.floor(100000 + Math.random() * 900000)}`,
+      userEmail: userEmail.trim().toLowerCase(),
+      userName: userName ? userName.trim() : 'Valued Customer',
+      phone: phone.trim(),
+      address: address.trim(),
+      city: city ? city.trim() : 'Lahore',
+      notes: notes ? notes.trim() : '',
+      items,
+      totalAmount: Number(totalAmount),
+      paymentMethod: paymentMethod || 'cod',
+      status: 'Pending',
+      createdAt: new Date().toISOString(),
+    };
+    ordersStore.unshift(newOrder);
+    return jsonResponse(200, { success: true, message: 'Order placed successfully! Awating admin confirmation.', order: newOrder });
+  }
+
+  if (route === '/orders/my-orders' && method === 'GET') {
+    const email = query.email;
+    if (!email) {
+      return jsonResponse(400, { error: 'User email parameter required.' });
+    }
+    const normalized = email.trim().toLowerCase();
+    const myOrders = ordersStore.filter((o) => o.userEmail === normalized);
+    return jsonResponse(200, { orders: myOrders });
+  }
+
+  if (route === '/orders/all' && method === 'GET') {
+    return jsonResponse(200, { orders: ordersStore });
+  }
+
+  if (route.startsWith('/orders/') && method === 'DELETE') {
+    const orderId = route.replace('/orders/', '');
+    const beforeLength = ordersStore.length;
+    const filtered = ordersStore.filter((o) => o.id !== orderId);
+    if (filtered.length === beforeLength) {
+      return jsonResponse(404, { error: 'Order not found.' });
+    }
+    ordersStore.length = 0;
+    ordersStore.push(...filtered);
+    return jsonResponse(200, { success: true, message: 'Order deleted successfully.' });
+  }
+
+  if (route.startsWith('/orders/') && route.endsWith('/status') && method === 'PUT') {
+    const orderId = route.replace(/^\/orders\//, '').replace(/\/status$/, '');
+    const { status } = body;
+    if (!['Pending', 'Confirmed', 'Cancelled'].includes(status)) {
+      return jsonResponse(400, { error: 'Invalid status value.' });
+    }
+    const order = ordersStore.find((o) => o.id === orderId);
+    if (!order) {
+      return jsonResponse(404, { error: 'Order not found.' });
+    }
+    order.status = status;
+    if (status === 'Confirmed') {
+      order.confirmedAt = new Date().toISOString();
+    }
+    return jsonResponse(200, { success: true, message: `Order status updated to ${status}.`, order });
   }
 
   return jsonResponse(404, { error: 'API route not found.' });
