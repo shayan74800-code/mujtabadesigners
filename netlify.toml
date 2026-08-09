@@ -1,0 +1,9 @@
+[build]
+  base = "mujtaba-designer-store"
+  command = "npm install && npm run build"
+  publish = "mujtaba-designer-store/dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

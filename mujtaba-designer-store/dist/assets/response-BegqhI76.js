@@ -1,0 +1,1 @@
+async function a(t){if((t.headers.get("content-type")||"").includes("application/json"))try{return await t.json()}catch{return null}const e=await t.text();if(!e)return null;try{return JSON.parse(e)}catch{return{_text:e}}}export{a as parseJSONSafe};
