@@ -47,6 +47,9 @@ const jsonResponse = (statusCode, payload) => ({
   body: JSON.stringify(payload),
 });
 
+const DEFAULT_ADMIN_EMAIL = 'admin';
+const DEFAULT_ADMIN_PASSWORD = 'admin';
+
 const sendOtpEmail = async (email, otpCode, firstName) => {
   const transporter = createTransporter();
   if (!transporter) {
@@ -79,40 +82,29 @@ const sendOtpEmail = async (email, otpCode, firstName) => {
 };
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return jsonResponse(204, {});
-  }
-
-  let body = {};
-  if (event.body) {
-    try {
-      body = JSON.parse(event.body);
-    } catch (error) {
-      return jsonResponse(400, { error: 'Invalid JSON body.' });
+  try {
+    if (event.httpMethod === 'OPTIONS') {
+      return jsonResponse(204, {});
     }
-  }
 
-  let route = event.path || '/';
-  if (route.startsWith('/.netlify/functions/api')) {
-    route = route.replace(/^\/\.netlify\/functions\/api/, '');
-  } else {
-    route = route.replace(/^\/api/, '');
-  }
-  route = route || '/';
-  const method = event.httpMethod;
-  const query = event.queryStringParameters || {};
-
-  if (productsStore.length === 0) {
-    try {
-      const productsPath = path.resolve(__dirname, '../../src/data.js');
-      const dataModule = await import(pathToFileURL(productsPath).href);
-      if (Array.isArray(dataModule.INITIAL_PRODUCTS)) {
-        productsStore.push(...dataModule.INITIAL_PRODUCTS);
+    let body = {};
+    if (event.body) {
+      try {
+        body = JSON.parse(event.body);
+      } catch (error) {
+        return jsonResponse(400, { error: 'Invalid JSON body.' });
       }
-    } catch (err) {
-      console.warn('Unable to load initial products for API route:', err);
     }
-  }
+
+    let route = event.path || '/';
+    if (route.startsWith('/.netlify/functions/api')) {
+      route = route.replace(/^\/\.netlify\/functions\/api/, '');
+    } else {
+      route = route.replace(/^\/api/, '');
+    }
+    route = route || '/';
+    const method = event.httpMethod;
+    const query = event.queryStringParameters || {};
 
   if (route === '/auth/send-otp' && method === 'POST') {
     const { gmail, firstName, lastName, password } = body;
@@ -141,10 +133,31 @@ exports.handler = async (event) => {
       emailSent: emailResult.emailSent,
       emailErrorMessage: emailResult.emailErrorMessage,
     };
-    if (process.env.NODE_ENV !== 'production') {
+    if (!emailResult.emailSent) {
+      response.debugOtp = otpCode;
+    } else if (process.env.NODE_ENV !== 'production') {
       response.debugOtp = otpCode;
     }
     return jsonResponse(200, response);
+  }
+
+  if (route === '/auth/login' && method === 'POST') {
+    const { gmail, password } = body;
+    if (!gmail || !password) {
+      return jsonResponse(400, { error: 'Gmail and password are required.' });
+    }
+
+    const account = usersStore.get(gmail.trim().toLowerCase());
+    if (!account || account.password !== password) {
+      return jsonResponse(401, { error: 'Invalid Gmail or password.' });
+    }
+
+    return jsonResponse(200, {
+      success: true,
+      message: 'Login successful.',
+      user: account.user,
+      token: `token_usr_${Date.now()}_${Math.random().toString(36).substring(2)}`,
+    });
   }
 
   if (route === '/auth/verify-otp' && method === 'POST') {
@@ -187,41 +200,17 @@ exports.handler = async (event) => {
     });
   }
 
-  if (route === '/auth/login' && method === 'POST') {
-    const { gmail, password } = body;
-    if (!gmail || !password) {
-      return jsonResponse(400, { error: 'Gmail and password are required.' });
-    }
-
-    const account = usersStore.get(gmail.trim().toLowerCase());
-    if (!account || account.password !== password) {
-      return jsonResponse(401, { error: 'Invalid Gmail or password.' });
-    }
-
-    return jsonResponse(200, {
-      success: true,
-      message: 'Login successful.',
-      user: account.user,
-      token: `token_usr_${Date.now()}_${Math.random().toString(36).substring(2)}`,
-    });
-  }
-
   if (route === '/auth/admin-login' && method === 'POST') {
     const { email, password } = body;
     if (!email || !password) {
       return jsonResponse(400, { error: 'Email and password are required.' });
     }
 
-    let expectedEmail = process.env.ADMIN_EMAIL;
-    let expectedPassword = process.env.ADMIN_PASSWORD;
+    let expectedEmail = process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL;
+    let expectedPassword = process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD;
 
-    if (!expectedEmail || !expectedPassword) {
-      if (process.env.NODE_ENV !== 'production') {
-        expectedEmail = expectedEmail || 'admin';
-        expectedPassword = expectedPassword || 'admin';
-      } else {
-        return jsonResponse(500, { error: 'Admin credentials are not configured.' });
-      }
+    if (process.env.NODE_ENV === 'production' && (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD)) {
+      return jsonResponse(500, { error: 'Admin credentials are not configured.' });
     }
 
     if (email === expectedEmail && password === expectedPassword) {
@@ -257,6 +246,17 @@ exports.handler = async (event) => {
   }
 
   if (route === '/products' && method === 'GET') {
+    if (productsStore.length === 0) {
+      try {
+        const productsPath = path.resolve(__dirname, '../../src/data.js');
+        const dataModule = await import(pathToFileURL(productsPath).href);
+        if (Array.isArray(dataModule.INITIAL_PRODUCTS)) {
+          productsStore.push(...dataModule.INITIAL_PRODUCTS);
+        }
+      } catch (err) {
+        console.warn('Unable to load initial products for API route:', err);
+      }
+    }
     return jsonResponse(200, { products: productsStore });
   }
 
@@ -382,4 +382,8 @@ exports.handler = async (event) => {
   }
 
   return jsonResponse(404, { error: 'API route not found.' });
+  } catch (error) {
+    console.error('API handler error:', error);
+    return jsonResponse(502, { error: 'Server error handling API request.', details: error?.message || 'Unknown error' });
+  }
 };
