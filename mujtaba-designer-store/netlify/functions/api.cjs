@@ -180,7 +180,7 @@ exports.handler = async (event) => {
       success: true,
       message: emailResult.emailSent
         ? `Verification code sent to ${emailKey}`
-        : `OTP generated for ${emailKey} but email could not be sent.`,
+        : `OTP generated for ${emailKey}. Email delivery failed; check SMTP configuration.`,
       emailSent: emailResult.emailSent,
       emailErrorMessage: emailResult.emailErrorMessage,
     };

@@ -13,10 +13,10 @@ import {
   ShoppingBag,
   ArrowLeft,
   LogOut,
-  Sparkles,
+  
   Send,
   ShieldAlert,
-  Film,
+  
   Phone,
   MapPin,
   MessageCircle,
@@ -181,20 +181,12 @@ export const CMSView: React.FC<CMSViewProps> = ({
   const [loginError, setLoginError] = useState('');
 
   // CMS Dashboard States (when logged in)
-  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'add_product' | 'video'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'add_product'>('orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [actionMessage, setActionMessage] = useState('');
 
-  // Video Settings State
-  const [heroVideoUrl, setHeroVideoUrl] = useState('');
-  const [heroPosterUrl, setHeroPosterUrl] = useState('');
-  const [showcaseVideoUrl, setShowcaseVideoUrl] = useState('');
-  const [showcasePosterUrl, setShowcasePosterUrl] = useState('');
-  const [showcaseTitle, setShowcaseTitle] = useState('');
-  const [showcaseSubtitle, setShowcaseSubtitle] = useState('');
-  const [loadingVideoSettings, setLoadingVideoSettings] = useState(false);
-  const [savingVideoSettings, setSavingVideoSettings] = useState(false);
+  // (Video Showcase manager removed)
 
   // Product Form State
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -259,70 +251,13 @@ export const CMSView: React.FC<CMSViewProps> = ({
     }
   };
 
-  // Fetch Video Settings
-  const fetchVideoSettings = async () => {
-    setLoadingVideoSettings(true);
-    try {
-      const res = await fetch('/api/settings/video');
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const { parseJSONSafe } = await import('../utils/response');
-      const data = await parseJSONSafe(res);
-      if (res.ok && data) {
-        setHeroVideoUrl(data.heroVideoUrl || '');
-        setHeroPosterUrl(data.heroPosterUrl || '');
-        setShowcaseVideoUrl(data.showcaseVideoUrl || '');
-        setShowcasePosterUrl(data.showcasePosterUrl || '');
-        setShowcaseTitle(data.showcaseTitle || '');
-        setShowcaseSubtitle(data.showcaseSubtitle || '');
-      }
-    } catch (err) {
-      console.error('Failed to fetch video settings:', err);
-    } finally {
-      setLoadingVideoSettings(false);
-    }
-  };
-
   useEffect(() => {
     if (admin) {
       fetchOrders();
-      fetchVideoSettings();
     }
   }, [admin]);
 
-  const handleSaveVideoSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavingVideoSettings(true);
-    setActionMessage('');
-    try {
-      const res = await fetch('/api/settings/video', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          heroVideoUrl,
-          heroPosterUrl,
-          showcaseVideoUrl,
-          showcasePosterUrl,
-          showcaseTitle,
-          showcaseSubtitle,
-        }),
-      });
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const { parseJSONSafe } = await import('../utils/response');
-      const data = await parseJSONSafe(res);
-      if (res.ok) {
-        setActionMessage('Video Showcase configuration updated live successfully!');
-        setTimeout(() => setActionMessage(''), 4000);
-      } else {
-        alert((data && data.error) || 'Failed to update video settings.');
-      }
-    } catch (err: any) {
-      alert(err.message || 'Error updating video settings.');
-    } finally {
-      setSavingVideoSettings(false);
-    }
-  };
+  
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: 'Confirmed' | 'Cancelled') => {
     setActionMessage('');
@@ -688,17 +623,7 @@ export const CMSView: React.FC<CMSViewProps> = ({
               {editingProductId ? 'Edit Product' : 'Add New Product'}
             </button>
 
-            <button
-              onClick={() => setActiveTab('video')}
-              className={`px-6 py-3 rounded-xl text-xs font-bold tracking-[0.2em] uppercase transition-all flex items-center gap-2 cursor-pointer ${
-                activeTab === 'video'
-                  ? 'bg-slate-950 text-amber-300 shadow-md'
-                  : 'text-stone-600 hover:bg-stone-100'
-              }`}
-            >
-              <Film className="w-4 h-4 text-amber-400" />
-              Video Showcase Manager
-            </button>
+            {/* Video Showcase Manager removed */}
           </div>
 
           <button
@@ -1117,209 +1042,7 @@ export const CMSView: React.FC<CMSViewProps> = ({
           </div>
         )}
 
-        {/* TAB 4: VIDEO SHOWCASE MANAGER */}
-        {activeTab === 'video' && (
-          <div className="bg-white rounded-3xl p-6 sm:p-10 border border-stone-200 shadow-md">
-            <div className="flex items-center gap-3 mb-8 pb-6 border-b border-stone-200">
-              <div className="p-3 bg-slate-950 text-amber-300 rounded-2xl border border-amber-400/30">
-                <Film className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="font-serif text-2xl font-bold uppercase tracking-wider text-slate-950">
-                  Cinematic Video Showcase & Hero Media Control
-                </h2>
-                <p className="text-stone-500 text-xs sm:text-sm mt-1">
-                  Change the main website background video, runway video showcase MP4 URLs, poster images, and custom section headings live from your CMS.
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSaveVideoSettings} className="space-y-10">
-              {/* Preset Video Quick Fill Bar */}
-              <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 font-bold text-amber-900 uppercase">
-                  <Sparkles className="w-4 h-4 text-amber-700" />
-                  <span>Quick Preset Video Library:</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHeroVideoUrl('https://assets.mixkit.co/videos/preview/mixkit-fashion-model-in-a-white-dress-walking-41443-large.mp4');
-                      setShowcaseVideoUrl('https://assets.mixkit.co/videos/preview/mixkit-fashion-model-in-a-white-dress-walking-41443-large.mp4');
-                    }}
-                    className="px-3 py-1.5 bg-white border border-amber-300 text-amber-900 font-semibold rounded-lg hover:bg-amber-100 transition-colors cursor-pointer"
-                  >
-                    Preset 1: Haute Fashion Runway
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHeroVideoUrl('https://assets.mixkit.co/videos/preview/mixkit-woman-wearing-a-red-dress-walking-41442-large.mp4');
-                      setShowcaseVideoUrl('https://assets.mixkit.co/videos/preview/mixkit-woman-wearing-a-red-dress-walking-41442-large.mp4');
-                    }}
-                    className="px-3 py-1.5 bg-white border border-amber-300 text-amber-900 font-semibold rounded-lg hover:bg-amber-100 transition-colors cursor-pointer"
-                  >
-                    Preset 2: Crimson Couture Reel
-                  </button>
-                </div>
-              </div>
-
-              {/* Section 1: Hero Top Background Video */}
-              <div className="p-6 bg-stone-50 rounded-2xl border border-stone-200 space-y-6">
-                <h3 className="font-serif text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-amber-600" />
-                  1. Main Hero Background Video Settings (Top Section)
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-2">
-                      Hero Video MP4 / WebM Direct URL *
-                    </label>
-                    <input
-                      type="url"
-                      required
-                      placeholder="https://example.com/video.mp4"
-                      value={heroVideoUrl}
-                      onChange={(e) => setHeroVideoUrl(e.target.value)}
-                      className="w-full p-3 bg-white border border-stone-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-amber-800"
-                    />
-                    <p className="text-[11px] text-stone-500 mt-1">
-                      Paste a direct .mp4 or .webm link. This loops seamlessly in the top Hero Banner.
-                    </p>
-                  </div>
-
-                  <ImageUploaderField
-                    id="hero-poster"
-                    label="Hero Video Fallback Poster Image (Drag & Drop or Select File)"
-                    value={heroPosterUrl}
-                    onChange={setHeroPosterUrl}
-                  />
-                </div>
-
-                {/* Hero Video Live Preview Box */}
-                {heroVideoUrl && (
-                  <div className="mt-4 p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 block mb-2">
-                      Hero Background Video Preview:
-                    </span>
-                    <video
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      src={heroVideoUrl}
-                      poster={heroPosterUrl}
-                      className="w-full h-48 object-cover rounded-xl border border-amber-400/20"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Section 2: Video Showcase Runway Section */}
-              <div className="p-6 bg-stone-50 rounded-2xl border border-stone-200 space-y-6">
-                <h3 className="font-serif text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-slate-950" />
-                  2. Showcase Runway Section Video Settings
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-2">
-                      Showcase Section Video MP4 URL *
-                    </label>
-                    <input
-                      type="url"
-                      required
-                      placeholder="https://example.com/runway_video.mp4"
-                      value={showcaseVideoUrl}
-                      onChange={(e) => setShowcaseVideoUrl(e.target.value)}
-                      className="w-full p-3 bg-white border border-stone-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-amber-800"
-                    />
-                  </div>
-
-                  <ImageUploaderField
-                    id="showcase-poster"
-                    label="Showcase Video Poster Image (Drag & Drop or Select File)"
-                    value={showcasePosterUrl}
-                    onChange={setShowcasePosterUrl}
-                  />
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-2">
-                      Showcase Title Text
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="PURE LUXURY • DEFINE YOUR STYLE"
-                      value={showcaseTitle}
-                      onChange={(e) => setShowcaseTitle(e.target.value)}
-                      className="w-full p-3 bg-white border border-stone-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-amber-800"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-2">
-                      Showcase Subtitle Description
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Watch the official Mujtaba Designer 2026 runway showcase..."
-                      value={showcaseSubtitle}
-                      onChange={(e) => setShowcaseSubtitle(e.target.value)}
-                      className="w-full p-3 bg-white border border-stone-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-amber-800"
-                    />
-                  </div>
-                </div>
-
-                {/* Showcase Video Live Preview Box */}
-                {showcaseVideoUrl && (
-                  <div className="mt-4 p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 block mb-2">
-                      Showcase Section Video Preview:
-                    </span>
-                    <video
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      src={showcaseVideoUrl}
-                      poster={showcasePosterUrl}
-                      className="w-full h-48 object-cover rounded-xl border border-amber-400/20"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="flex gap-4 pt-6 border-t border-stone-200">
-                <button
-                  type="button"
-                  onClick={fetchVideoSettings}
-                  className="px-6 py-3.5 border border-stone-300 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-stone-100 cursor-pointer"
-                >
-                  Reset Settings
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={savingVideoSettings}
-                  className="flex-1 py-4 bg-slate-950 hover:bg-amber-800 text-amber-300 hover:text-white font-bold text-xs uppercase tracking-[0.25em] rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl border border-amber-400/40"
-                >
-                  {savingVideoSettings ? (
-                    <RefreshCw className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Film className="w-5 h-5 text-amber-400" />
-                      Save & Publish Video Settings Live
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+        {/* Video Showcase manager removed */}
       </div>
     </div>
   );
