@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Phone, MapPin, Mail, MessageSquare, Instagram, Facebook, ArrowRight, ShieldCheck, RefreshCw, Truck } from 'lucide-react';
+import { Phone, MapPin, Mail, MessageSquare, Instagram, Facebook } from 'lucide-react';
 import logoImg from '../assets/images/mujtaba_new_logo_1786264765562.jpg';
 
 interface FooterProps {
-  onOpenLocation: () => void;
+  onOpenLocation?: () => void;
   onSelectCategory: (category: string) => void;
   onOpenPolicies?: (tab?: 'returns' | 'shipping' | 'privacy' | 'complaints') => void;
 }
@@ -14,7 +14,6 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLocation, onSelectCategory
 
   const complaintPhone = "+92 331 8858108";
   const storeAddress = "Shop No G 90/91, Rabi Saddar, Adamjee Road, Rawalpindi, Pakistan";
-  const mapsUrl = "https://maps.app.goo.gl/cnQJurxWFzrfpRLYA";
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,11 +25,129 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLocation, onSelectCategory
   };
 
   return (
-    <footer className="bg-[#0b0f17] text-white pt-16 pb-12 relative border-t border-amber-900/40">
+    <footer className="bg-[#8B1D1D] text-white pt-12 pb-6 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-stone-800">
-          {/* Col 1: Brand Info & Logo */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12">
+          {/* Get in Touch */}
           <div className="space-y-4">
+            <h4 className="text-lg font-bold uppercase tracking-widest mb-4">Get in Touch</h4>
+            <div className="flex items-center gap-3">
+              <MapPin className="w-5 h-5 flex-shrink-0" />
+              <p className="text-sm">{storeAddress}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Mail className="w-5 h-5 flex-shrink-0" />
+              <a href="mailto:Info.WajdaanFabrics@gmail.com" className="text-sm hover:text-yellow-300">
+                Info.MujtabaDesigner@gmail.com
+              </a>
+            </div>
+            <div className="flex items-center gap-3">
+              <Phone className="w-5 h-5 flex-shrink-0" />
+              <a href={`tel:${complaintPhone}`} className="text-sm hover:text-yellow-300">
+                {complaintPhone}
+              </a>
+            </div>
+          </div>
+
+          {/* Our Policies */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-bold uppercase tracking-widest mb-4">Our Policies</h4>
+            <ul className="space-y-2 text-sm">
+              {onOpenPolicies && (
+                <>
+                  <li>
+                    <button onClick={() => onOpenPolicies('privacy')} className="hover:text-yellow-300">
+                      Privacy Policy
+                    </button>
+                  </li>
+                  <li>
+                    <button onClick={() => onOpenPolicies('returns')} className="hover:text-yellow-300">
+                      Refund Policy
+                    </button>
+                  </li>
+                  <li>
+                    <button onClick={() => onOpenPolicies('shipping')} className="hover:text-yellow-300">
+                      Shipping Policy
+                    </button>
+                  </li>
+                  <li>
+                    <button className="hover:text-yellow-300">
+                      Terms of Service
+                    </button>
+                  </li>
+                  <li>
+                    <button className="hover:text-yellow-300">
+                      Contact Information
+                    </button>
+                  </li>
+                </>
+              )}
+            </ul>
+          </div>
+
+          {/* Our Product Categories */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-bold uppercase tracking-widest mb-4">Our Product Categories</h4>
+            <ul className="space-y-2 text-sm">
+              <li><button onClick={() => onSelectCategory('HOME')} className="hover:text-yellow-300">Home</button></li>
+              <li><button onClick={() => onSelectCategory('NEW ARRIVALS')} className="hover:text-yellow-300">New Arrivals</button></li>
+              <li><button onClick={() => onSelectCategory('SALE')} className="hover:text-yellow-300">Sale</button></li>
+              <li><button onClick={() => onSelectCategory('BRANDS')} className="hover:text-yellow-300">Brands</button></li>
+              <li><button onClick={() => onSelectCategory('FORMALS')} className="hover:text-yellow-300">Formals</button></li>
+              <li><button onClick={() => onSelectCategory('PARTY WEAR')} className="hover:text-yellow-300">Party Wear</button></li>
+              <li><button onClick={() => onSelectCategory('LAWN')} className="hover:text-yellow-300">Lawn</button></li>
+            </ul>
+          </div>
+
+          {/* Newsletter Signup */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-bold uppercase tracking-widest mb-4">Newsletter Signup</h4>
+            <p className="text-sm">Subscribe to our newsletter and get 10% off your first purchase</p>
+            <form onSubmit={handleSubscribe} className="space-y-3">
+              <input
+                type="email"
+                placeholder="Your email address"
+                value={emailSub}
+                onChange={(e) => setEmailSub(e.target.value)}
+                className="w-full px-4 py-2 rounded text-slate-950 text-sm focus:outline-none"
+                required
+              />
+              <button
+                type="submit"
+                className="w-full px-4 py-2 bg-slate-950 hover:bg-slate-900 rounded font-semibold uppercase tracking-wider transition-colors"
+              >
+                Subscribe
+              </button>
+              {subSuccess && (
+                <p className="text-sm text-yellow-300">
+                  Thank you for subscribing!
+                </p>
+              )}
+            </form>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="border-t border-white/20 pt-8 pb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
+            <p>© 2026 MUJTABA DESIGNER. All Rights Reserved.</p>
+            <div className="flex items-center gap-4">
+              <a href="https://www.instagram.com/mujtaba_designers_" target="_blank" rel="noopener noreferrer" className="hover:text-yellow-300">
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a href="https://www.facebook.com/mujtaba" target="_blank" rel="noopener noreferrer" className="hover:text-yellow-300">
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a href="https://wa.me/923318858108" target="_blank" rel="noopener noreferrer" className="hover:text-yellow-300">
+                <MessageSquare className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full border border-amber-400/40 p-0.5 overflow-hidden bg-white shadow-md">
                 <img

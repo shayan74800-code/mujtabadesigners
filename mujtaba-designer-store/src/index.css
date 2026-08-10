@@ -21,7 +21,7 @@
   #root {
     width: 100%;
     overflow-x: hidden;
-    background-color: #fcfbf9;
+    background-color: #ffffff;
     color: #111827;
     font-family: var(--font-sans);
     scroll-behavior: smooth;
@@ -40,28 +40,19 @@
   }
 }
 
-/* Umar Fabrics Luxury Color Utilities & Animations */
+/* Burgundy Color Scheme */
 @layer utilities {
-  .bg-umar-dark {
-    background-color: #0b0f17;
+  .bg-brand {
+    background-color: #8B1D1D;
   }
-  .bg-umar-emerald {
-    background-color: #132e21;
+  .text-brand {
+    color: #8B1D1D;
   }
-  .text-umar-emerald {
-    color: #132e21;
-  }
-  .bg-umar-gold {
-    background-color: #b89230;
-  }
-  .text-umar-gold {
-    color: #b89230;
-  }
-  .border-umar-gold {
-    border-color: #b89230;
+  .border-brand {
+    border-color: #8B1D1D;
   }
 
-  /* Custom Scrollbar for Luxury Aesthetics */
+  /* Custom Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -70,10 +61,10 @@
     background: #f1f1f1;
   }
   ::-webkit-scrollbar-thumb {
-    background: #b89230;
+    background: #8B1D1D;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #132e21;
+    background: #6D1515;
   }
 }
