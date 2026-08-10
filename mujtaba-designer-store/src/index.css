@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @font-face {
@@ -10,9 +11,9 @@
 
 @layer base {
   :root {
-    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-serif: 'Bricolage Grotesque', 'Segoe UI', sans-serif;
     --font-cinzel: 'Cinzel', serif;
-    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-sans: 'Poppins', 'Segoe UI', sans-serif;
   }
 
   html,

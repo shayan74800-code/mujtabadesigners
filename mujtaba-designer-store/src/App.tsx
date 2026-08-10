@@ -15,6 +15,7 @@ import { WishlistDrawer } from './components/WishlistDrawer';
 import { CMSView } from './components/CMSView';
 import { Footer } from './components/Footer';
 import { AssistantChat } from './components/AssistantChat';
+import { StorefrontShowcase } from './components/StorefrontShowcase';
 import { Product, CartItem, User, AdminUser, VideoSettings } from './types';
 import { INITIAL_PRODUCTS } from './data/initialProducts';
 
@@ -296,15 +297,25 @@ export default function App() {
         />
       </Suspense>
 
+      <StorefrontShowcase
+        products={products}
+        onExplore={(cat) => {
+          setActiveCategory(cat);
+          const el = document.getElementById('catalog-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onQuickView={(product) => setQuickViewProduct(product)}
+      />
+
       {/* Main E-Commerce Catalog Section */}
       <main id="catalog-section" className="flex-1 max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 py-16 sm:py-24 w-full">
         {/* Category Header Bar */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-stone-300 pb-8 mb-12 gap-6">
           <div>
-            <span className="text-xs uppercase font-extrabold tracking-[0.3em] text-amber-800 block mb-2">
+            <span className="text-[11px] uppercase font-extrabold tracking-[0.35em] text-[#8b1d1d] block mb-2">
               EXCLUSIVE WOMEN'S LUXURY COLLECTION 2026
             </span>
-            <h2 className="font-serif text-3xl sm:text-5xl font-extralight text-slate-950 uppercase tracking-wide leading-tight">
+            <h2 className="font-serif text-3xl sm:text-5xl font-semibold text-slate-950 uppercase tracking-[0.02em] leading-tight">
               {activeCategory}
             </h2>
           </div>
@@ -315,10 +326,10 @@ export default function App() {
               <button
                 key={c}
                 onClick={() => setActiveCategory(c)}
-                className={`px-5 py-3 rounded-xl text-xs sm:text-sm font-bold tracking-wider uppercase transition-all cursor-pointer border shadow-2xs ${
+                className={`px-5 py-3 rounded-full text-xs sm:text-sm font-bold tracking-[0.24em] uppercase transition-all cursor-pointer border shadow-sm ${
                   activeCategory === c
-                    ? 'border-amber-800 bg-amber-800 text-white shadow-md'
-                    : 'border-stone-300 text-slate-800 hover:border-slate-500 bg-white'
+                    ? 'border-[#8b1d1d] bg-[#8b1d1d] text-white shadow-md'
+                    : 'border-stone-300 text-slate-700 hover:border-[#8b1d1d] hover:text-[#8b1d1d] bg-white'
                 }`}
               >
                 {c}
